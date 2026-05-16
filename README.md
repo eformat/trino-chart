@@ -25,7 +25,7 @@ Trino Helm chart configured for OpenShift with GenAI functions and an Iceberg la
 - **AI Functions** — sentiment analysis, classification, extraction, translation, masking, grammar correction, and text generation via an OpenAI-compatible LLM endpoint
 - **Iceberg Lakehouse** — S3-backed tables on MinIO with Nessie catalog
 - **Trino Query UI** — web-based SQL editor with syntax highlighting
-- **21 example queries** covering all 7 AI functions, including 3 that query a HuggingFace hotel reviews dataset from S3
+- **26 example queries** covering all 7 AI functions, including 8 that query real HuggingFace datasets (hotel reviews + financial news) from S3
 
 ## Quick Start
 
@@ -38,8 +38,9 @@ helm install trino ./trino -n trino --create-namespace
 # Deploy Nessie catalog + create MinIO bucket
 oc apply -f nessie/ -n trino
 
-# Load HuggingFace dataset
+# Load HuggingFace datasets
 python examples/load_dataset.py
+python examples/load_financial_sentiment.py
 
 # Run all AI function examples
 ./examples/run_all.sh
@@ -59,6 +60,11 @@ python examples/load_dataset.py
 | 19 | Review intelligence pipeline (S3 data) | `ai_analyze_sentiment` + `ai_classify` + `ai_extract` |
 | 20 | Executive summary from reviews (S3 data) | `ai_gen` |
 | 21 | PII-safe multilingual export (S3 data) | `ai_mask` + `ai_fix_grammar` + `ai_translate` |
+| 22 | Market mood ring — AI vs human labels (S3 data) | `ai_analyze_sentiment` + `ai_gen` |
+| 23 | Financial threat intelligence (S3 data) | `ai_classify` + `ai_extract` + `ai_mask` |
+| 24 | Multilingual trading desk (S3 data) | `ai_translate` + `ai_analyze_sentiment` |
+| 25 | AI editorial pipeline (S3 data) | `ai_fix_grammar` + `ai_gen` + `ai_classify` |
+| 26 | Daily analyst briefing (S3 data) | `ai_gen` |
 
 ## Project Structure
 

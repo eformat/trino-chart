@@ -232,7 +232,34 @@ trino --server http://localhost:8080 --execute \
 # POSITIVE  8920
 ```
 
-## 7. Deploy Trino Query UI (Optional)
+## 7. Load Financial Sentiment Dataset
+
+### Download
+
+```bash
+export HF_TOKEN=<your-hf-token>
+hf download NOSIBLE/financial-sentiment --repo-type dataset --local-dir /tmp/financial-sentiment
+```
+
+### Load into Trino
+
+```bash
+python examples/load_financial_sentiment.py
+```
+
+This creates the `lakehouse.finance.financial_news` Iceberg table with 100,000 financial news articles.
+
+### Verify
+
+```bash
+trino --server http://localhost:8080 --execute \
+  "SELECT label, count(*) FROM lakehouse.finance.financial_news GROUP BY label"
+# neutral   39309
+# positive  36257
+# negative  24434
+```
+
+## 8. Deploy Trino Query UI (Optional)
 
 Build and push the container image:
 
@@ -250,7 +277,7 @@ Deploy the Helm chart:
 helm install trino-query-ui chart/ -n trino
 ```
 
-## 8. Run AI Function Examples
+## 9. Run AI Function Examples
 
 ### Smoke test
 
@@ -284,6 +311,27 @@ trino --server http://localhost:8080 -f examples/20_reviews_summary.sql
 
 # PII masking + grammar fix + translation
 trino --server http://localhost:8080 -f examples/21_reviews_pii_safe.sql
+```
+
+### Financial sentiment examples (22-26)
+
+These query 100K financial news articles on MinIO S3:
+
+```bash
+# Cross-validate AI vs human sentiment labels
+trino --server http://localhost:8080 -f examples/22_finance_mood_ring.sql
+
+# Classify risk type, extract entities, mask PII
+trino --server http://localhost:8080 -f examples/23_finance_threat_intel.sql
+
+# Translate financial news to Japanese and Spanish
+trino --server http://localhost:8080 -f examples/24_finance_multilingual.sql
+
+# Editorial pipeline: grammar fix + headline generation + sector classification
+trino --server http://localhost:8080 -f examples/25_finance_editorial.sql
+
+# Morning briefing: aggregate negative news into analyst report
+trino --server http://localhost:8080 -f examples/26_finance_daily_briefing.sql
 ```
 
 ### Run all examples
