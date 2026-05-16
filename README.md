@@ -2,6 +2,8 @@
 
 Trino Helm chart configured for OpenShift with GenAI functions and an Iceberg lakehouse on MinIO S3.
 
+- https://trino.io/docs/current/functions/ai.html
+
 ## Architecture
 
 ![images/trino-architecture.png](images/trino-architecture.png)
