@@ -4,20 +4,7 @@ Trino Helm chart configured for OpenShift with GenAI functions and an Iceberg la
 
 ## Architecture
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Trino Query │     │    Trino     │     │   LLM (MaaS) │
-│     UI       │────▶│ Coordinator  │────▶│ Llama 4 Scout│
-└──────────────┘     │  + Workers   │     └──────────────┘
-                     └──────┬───────┘
-                            │
-               ┌────────────┼────────────┐
-               │            │            │
-        ┌──────▼──┐  ┌──────▼──┐  ┌──────▼──┐
-        │  Nessie │  │  MinIO  │  │  TPC-H  │
-        │ Catalog │  │   S3    │  │ TPC-DS  │
-        └─────────┘  └─────────┘  └─────────┘
-```
+![images/trino-architecture.png](images/trino-architecture.png)
 
 ## What's Included
 
@@ -27,9 +14,30 @@ Trino Helm chart configured for OpenShift with GenAI functions and an Iceberg la
 - **Trino Query UI** — web-based SQL editor with syntax highlighting
 - **26 example queries** covering all 7 AI functions, including 8 that query real HuggingFace datasets (hotel reviews + financial news) from S3
 
+## OpenShift fastpath install
+
+Install in OpenShift using the all-in-one install script.
+
+```bash
+export OPENAI_API_KEY=sk-...                      # model api key
+export OPENAI_BASE_URL=                           # model base url. do *not* end with /v1
+export OPENAI_MODEL=                              # model name
+export S3_ACCESS_KEY=                             # s3 key
+export S3_SECRET_KEY=                             # s3 secret
+export S3_BUCKET=warehouse                        # bucket name
+export HF_TOKEN=hf-...                            # hugging face token for dataset download
+export TRINO_NAMESPACE=                           # namespace for trino
+export MINIO_NAMESPACE=                           # namespace for minio
+export MINIO_PVC_SIZE=                            # minio pvc size e.g. 50Gi
+```
+
+```bash
+./install.sh
+```
+
 ## Quick Start
 
-See [SETUP.md](SETUP.md) for the full step-by-step guide.
+See [SETUP.md](SETUP.md) for the full step-by-step guide. In a bit more detail.
 
 ```bash
 # Deploy Trino
@@ -37,6 +45,9 @@ helm install trino ./trino -n trino --create-namespace
 
 # Deploy Nessie catalog + create MinIO bucket
 oc apply -f nessie/ -n trino
+
+# Run the trino port-forward
+oc -n trino port-forward svc/trino 8080:8080 2>&1 > /dev/null &
 
 # Load HuggingFace datasets
 python examples/load_dataset.py
