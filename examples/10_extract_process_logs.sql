@@ -11,6 +11,6 @@ WITH ProcessLogs AS (
 )
 SELECT
     log_entry,
-    ai_extract(log_entry, ARRAY['process_name', 'command']) AS extracted_data
+    CAST(ai_extract(log_entry, ARRAY['process_name', 'command']) AS JSON) AS extracted_data
 FROM ProcessLogs
 ;

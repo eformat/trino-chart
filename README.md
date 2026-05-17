@@ -14,7 +14,7 @@ Trino Helm chart configured for OpenShift with GenAI functions and an Iceberg la
 - **AI Functions** — sentiment analysis, classification, extraction, translation, masking, grammar correction, and text generation via an OpenAI-compatible LLM endpoint
 - **Iceberg Lakehouse** — S3-backed tables on MinIO with Nessie catalog
 - **Trino Query UI** — web-based SQL editor with syntax highlighting
-- **26 example queries** covering all 7 AI functions, including 8 that query real HuggingFace datasets (hotel reviews + financial news) from S3
+- **34 example queries** covering all 7 AI functions, including 8 that query real HuggingFace datasets (hotel reviews + financial news) from S3
 
 ## OpenShift fastpath install
 
@@ -78,6 +78,14 @@ python examples/load_financial_sentiment.py
 | 24 | Multilingual trading desk (S3 data) | `ai_translate` + `ai_analyze_sentiment` |
 | 25 | AI editorial pipeline (S3 data) | `ai_fix_grammar` + `ai_gen` + `ai_classify` |
 | 26 | Daily analyst briefing (S3 data) | `ai_gen` |
+| 27 | Semantic reading list (vector search) | Cosine similarity + `ai_gen` |
+| 28 | Topic discovery (vector search) | `ai_classify` |
+| 29 | Content quality audit (vector search) | `ai_analyze_sentiment` + `ai_fix_grammar` + `ai_classify` |
+| 30 | Knowledge graph (vector search) | Cosine similarity + `ai_extract` |
+| 31 | Multilingual knowledge base (vector search) | Cosine similarity + `ai_translate` |
+| 32 | News-to-Docs cross-catalog (S3 + PostgreSQL) | `ai_classify` + `ai_gen` |
+| 33 | Reviews-to-Architecture cross-catalog (S3 + PostgreSQL) | `ai_classify` + `ai_gen` |
+| 34 | Federated intelligence briefing (S3 + PostgreSQL) | `ai_gen` |
 
 ## Project Structure
 

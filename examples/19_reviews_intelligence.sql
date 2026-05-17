@@ -10,5 +10,5 @@ SELECT
     label AS original_label,
     ai_analyze_sentiment(review) AS sentiment,
     ai_classify(review, ARRAY['Service', 'Cleanliness', 'Location', 'Value', 'Amenities']) AS category,
-    ai_extract(review, ARRAY['hotel_feature', 'issue']) AS extracted
+    CAST(ai_extract(review, ARRAY['hotel_feature', 'issue']) AS JSON) AS extracted
 FROM sample_reviews;

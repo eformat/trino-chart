@@ -11,6 +11,6 @@ WITH FIMLogs AS (
 )
 SELECT
     log_entry,
-    ai_extract(log_entry, ARRAY['file_path', 'action']) AS extracted_data
+    CAST(ai_extract(log_entry, ARRAY['file_path', 'action']) AS JSON) AS extracted_data
 FROM FIMLogs
 ;

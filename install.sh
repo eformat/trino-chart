@@ -36,6 +36,11 @@ MINIO_PVC_SIZE=${MINIO_PVC_SIZE:-100Gi}
 HF_TOKEN=${HF_TOKEN:-}
 TRINO_NAMESPACE=${TRINO_NAMESPACE:-trino}
 MINIO_NAMESPACE=${MINIO_NAMESPACE:-minio}
+POSTGRES_HOST=${POSTGRES_HOST:-}
+POSTGRES_PORT=${POSTGRES_PORT:-5432}
+POSTGRES_DB=${POSTGRES_DB:-vectordb}
+POSTGRES_USER=${POSTGRES_USER:-postgres}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
 SKIP_MINIO=${SKIP_MINIO:-}
 SKIP_UI=${SKIP_UI:-}
 SKIP_DATA=${SKIP_DATA:-}
@@ -223,14 +228,14 @@ deploy_nessie() {
 # ---------------------------------------------------------------------------
 create_secrets() {
     echo "🌴 Running create_secrets..."
-    if oc -n "$TRINO_NAMESPACE" get secret trino-llm-api-key &>/dev/null; then
-        echo "🌴 Secret trino-llm-api-key already exists, skipping"
-        return
-    fi
-    oc -n "$TRINO_NAMESPACE" create secret generic trino-llm-api-key \
-        --from-literal=OPENAI_API_KEY="${OPENAI_API_KEY}" \
-        --from-literal=S3_ACCESS_KEY="${S3_ACCESS_KEY}" \
+    oc -n "$TRINO_NAMESPACE" delete secret trino-llm-api-key 2>/dev/null || true
+    local secret_args=(
+        --from-literal=OPENAI_API_KEY="${OPENAI_API_KEY}"
+        --from-literal=S3_ACCESS_KEY="${S3_ACCESS_KEY}"
         --from-literal=S3_SECRET_KEY="${S3_SECRET_KEY}"
+    )
+    [ ! -z "$POSTGRES_HOST" ] && secret_args+=(--from-literal=POSTGRES_PASSWORD="${POSTGRES_PASSWORD}")
+    oc -n "$TRINO_NAMESPACE" create secret generic trino-llm-api-key "${secret_args[@]}"
     if [ "$?" != 0 ]; then
         echo -e "🕱${RED}Failed - create_secrets?${NC}"
         exit 1
@@ -263,6 +268,16 @@ catalogs:
     s3.aws-access-key=\${ENV:S3_ACCESS_KEY}
     s3.aws-secret-key=\${ENV:S3_SECRET_KEY}
 EOF
+    if [ ! -z "$POSTGRES_HOST" ]; then
+        echo "🌴 Adding PostgreSQL catalog (vectordb)..."
+        cat <<EOF >> /tmp/trino-install-values.yaml
+  vectordb: |
+    connector.name=postgresql
+    connection-url=jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    connection-user=${POSTGRES_USER}
+    connection-password=\${ENV:POSTGRES_PASSWORD}
+EOF
+    fi
     helm upgrade --install trino "${SCRIPT_DIR}/trino" \
         -n "$TRINO_NAMESPACE" \
         -f /tmp/trino-install-values.yaml
@@ -481,6 +496,7 @@ all() {
     echo "🌴 MINIO_NAMESPACE set to $MINIO_NAMESPACE"
     echo "🌴 S3_BUCKET set to $S3_BUCKET"
     echo "🌴 MINIO_PVC_SIZE set to $MINIO_PVC_SIZE"
+    [ ! -z "$POSTGRES_HOST" ] && echo "🌴 POSTGRES_HOST set to $POSTGRES_HOST"
     [ ! -z "$SKIP_MINIO" ] && echo "🌴 SKIP_MINIO set"
     [ ! -z "$SKIP_UI" ] && echo "🌴 SKIP_UI set"
     [ ! -z "$SKIP_DATA" ] && echo "🌴 SKIP_DATA set"
@@ -526,6 +542,11 @@ Optional:
   MINIO_PVC_SIZE       MinIO PVC size (default: 100Gi)
   TRINO_NAMESPACE      Trino namespace (default: trino)
   MINIO_NAMESPACE      MinIO namespace (default: minio)
+  POSTGRES_HOST        PostgreSQL host (optional, enables vectordb catalog)
+  POSTGRES_PORT        PostgreSQL port (default: 5432)
+  POSTGRES_DB          PostgreSQL database (default: vectordb)
+  POSTGRES_USER        PostgreSQL user (default: postgres)
+  POSTGRES_PASSWORD    PostgreSQL password (default: password)
   SKIP_MINIO           Skip MinIO deployment
   SKIP_UI              Skip Query UI deployment
   SKIP_DATA            Skip HuggingFace dataset loading

@@ -12,6 +12,6 @@ WITH AuthenticationLogs AS (
 )
 SELECT
     log_entry,
-    ai_extract(log_entry, ARRAY['username', 'ip_address']) AS extracted_data
+    CAST(ai_extract(log_entry, ARRAY['username', 'ip_address']) AS JSON) AS extracted_data
 FROM AuthenticationLogs
 ;
